@@ -163,9 +163,11 @@ MiniOB 中的单测框架使用 `GTest`，在默认参数编译后，单测二�
 ##### 1. 数据组织
 
 * `src/oblsm/table/ob_block.cpp`
+
 * `src/oblsm/table/ob_sstable.cpp`
+
 * `src/oblsm/table/ob_sstable_builder.cpp`
-* 
+
 ##### 2. 块缓存
 
 * `src/oblsm/memtable/src/oblsm/util/ob_lru_cache.h`
@@ -198,8 +200,11 @@ MiniOB 中的单测框架使用 `GTest`，在默认参数编译后，单测二�
 #### 测试的代码
 
 查看测试用例检查接口的实现。
+
  * `unittest/oblsm/ob_block_test.cpp`
+
  * `unittest/oblsm/ob_table_test.cpp`
+
  * `unittest/oblsm/ob_lru_cache_test.cpp`
 
 每个 SSTable 是由多个 Block构成。
