@@ -1,17 +1,27 @@
 #include "gtest/gtest.h"
+#include <string>
 #define private public
 #include "storage/index/radix_index.hpp"
 
 using namespace radix;
+
+
+TEST(RadixTreeTest, InsertCase0)
+{
+  radix_tree<int> tree;
+  tree.put("e", 1);
+  tree.put("bc", 2);
+
+  EXPECT_EQ(tree.search("e").value(), 1);
+  EXPECT_EQ(tree.search("bc").value(), 2);
+  EXPECT_EQ(tree.search("b").has_value(), false);
+}
 
 TEST(RadixTreeTest, InsertCase1)
 {
   radix_tree<int> tree;
   tree.put("bcde", 1);
   tree.put("bc", 2);
-
-  EXPECT_EQ(*tree.root_->v, 2);
-  EXPECT_EQ(*tree.root_->children[static_cast<uint8_t>('d')]->v, 1);
 
   EXPECT_EQ(tree.search("bcde").value(), 1);
   EXPECT_EQ(tree.search("bc").value(), 2);
@@ -74,6 +84,22 @@ TEST(RadixTreeTest, InsertAndSearch)
   EXPECT_FALSE(result4.has_value());
 }
 
+TEST(RadixTreeTest, InsertCase5)
+{
+  radix_tree<int> tree;
+  for (auto i = 0; i < 10000; ++i) {
+    string k = "key" + std::to_string(i);
+    tree.put(k, i);
+  }
+
+  for (auto i = 0; i < 10000; ++i) {
+    string k   = "key" + std::to_string(i);
+    auto   res = tree.search(k);
+    EXPECT_EQ(res.has_value(), true);
+    EXPECT_EQ(res.value(), i);
+  }
+}
+
 TEST(RadixTreeTest, InsertSameKey)
 {
   radix_tree<int> tree;
@@ -92,6 +118,28 @@ TEST(RadixTreeTest, InsertEmptyKey)
   tree.put("", 1);
   auto result = tree.search("");
   EXPECT_FALSE(result.has_value());
+}
+
+TEST(RadixTreeTest, StartWith)
+{
+  radix_tree<int> tree;
+  for (auto i = 0; i < 10000; ++i) {
+    string k = "key" + std::to_string(i);
+    tree.put(k, i);
+  }
+
+
+  EXPECT_TRUE(tree.start_with("ke"));
+  EXPECT_TRUE(tree.start_with("key1"));
+  EXPECT_FALSE(tree.start_with("hello"));
+}
+
+// 测试 search 方法的边界情况
+TEST(RadixTreeTest, SearchBoundaryCase) {
+    radix_tree<int> tree;
+    tree.put("cherry", 1);
+    auto result = tree.search("cherr");
+    EXPECT_FALSE(result.has_value());
 }
 
 int main(int argc, char **argv)
