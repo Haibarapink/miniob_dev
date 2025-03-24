@@ -14,7 +14,7 @@ protected:
 
   void SetUp() override
   {
-    std::ifstream           op_file("/config/workspace/radix_dev/miniob/unittest/observer/data/operation.json");
+    std::ifstream           op_file("/config/workspace/radix_dev/miniob/unittest/observer/radix/test/operation.json");
     Json::CharReaderBuilder reader_builder;
     std::string             errs;
     bool                    success = Json::parseFromStream(reader_builder, op_file, &op_json, &errs);
@@ -23,19 +23,19 @@ protected:
     }
     op_file.close();
 
-    std::ifstream dataFile("/config/workspace/radix_dev/miniob/unittest/observer/data/data.json");
-    success = Json::parseFromStream(reader_builder, dataFile, &data_json, &errs);
+    std::ifstream data_file("/config/workspace/radix_dev/miniob/unittest/observer/radix/test/data.json");
+    success = Json::parseFromStream(reader_builder, data_file, &data_json, &errs);
     if (!success) {
       std::cerr << "Failed to parse data.json: " << errs << std::endl;
     }
-    dataFile.close();
+    data_file.close();
 
-    std::ifstream expectFile("/config/workspace/radix_dev/miniob/unittest/observer/data/expect.json");
-    success = Json::parseFromStream(reader_builder, expectFile, &expect_json, &errs);
+    std::ifstream expect_file("/config/workspace/radix_dev/miniob/unittest/observer/radix/test/expect.json");
+    success = Json::parseFromStream(reader_builder, expect_file, &expect_json, &errs);
     if (!success) {
       std::cerr << "Failed to parse expect.json: " << errs << std::endl;
     }
-    expectFile.close();
+    expect_file.close();
   }
 };
 
@@ -50,7 +50,6 @@ TEST_F(RadixTreeJSONTest, ExecuteOperationsAndCompareResults)
       results.push_back(false);
     } else if (operation == "insert") {
       std::string key = data[0].asString();
-
       tree.put(key, 1);
       results.push_back(false);
     } else if (operation == "search") {
