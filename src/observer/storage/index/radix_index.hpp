@@ -68,7 +68,6 @@ public:
   std::optional<V> search(string_view key);
 
 private:
-  string_view consume(size_t count, string_view key) { return key.substr(count); }
 
   void recursive_put(std::shared_ptr<radix_node<V>> &node, string_view key, V val);
 
@@ -156,6 +155,11 @@ void radix_tree<V>::recursive_put(std::shared_ptr<radix_node<V>> &node, string_v
     }
     return;
   } else {
+    // node: bc, insert bcde
+    // node: bcef, insert bcde
+    key     = key.substr(matched_prefix_length);
+    char ch = key[0];
+    recursive_put(node->children[static_cast<uint8_t>(ch)], key, std::move(val));
   }
 }
 
