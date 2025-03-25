@@ -139,8 +139,65 @@ TEST(RadixTreeTest, RemoveCase)
   EXPECT_EQ(v, 1234);
   EXPECT_FALSE(tree.search("key1234").has_value());
 
-  
+
 }
+
+// 空树查找测试用例
+TEST(RadixTreeTest, SearchEmptyTreeCase)
+{
+    radix_tree<int> tree;
+    std::string key = "non_existent_key";
+    auto result = tree.search(key);
+    EXPECT_FALSE(result.has_value());
+}
+
+// 删除不存在的键测试用例
+TEST(RadixTreeTest, RemoveNonExistentKeyCase)
+{
+    radix_tree<int> tree;
+    std::string key = "non_existent_key";
+    auto result = tree.remove(key);
+    EXPECT_TRUE(result == nullptr);
+}
+
+// 删除 20 个 key，检查剩余 key 和删除的 key
+TEST(RadixTreeTest, Remove20KeysAndCheck)
+{
+    radix_tree<int> tree;
+    const int totalKeys = 100;
+    for (int i = 0; i < totalKeys; ++i) {
+        std::string k = "key" + std::to_string(i);
+        tree.put(k, i);
+    }
+
+    // 选择要删除的 20 个 key
+    std::vector<int> keysToRemove;
+    for (int i = 0; i < 20; ++i) {
+        keysToRemove.push_back(i);
+    }
+
+    // 删除 20 个 key
+    for (int keyIndex : keysToRemove) {
+        std::string k = "key" + std::to_string(keyIndex);
+        auto removedValue = tree.remove(k);
+        EXPECT_TRUE(*removedValue == keyIndex );
+    }
+
+    // 检查删除的 20 个 key 不存在
+    for (int keyIndex : keysToRemove) {
+        std::string k = "key" + std::to_string(keyIndex);
+        auto result = tree.search(k);
+        EXPECT_FALSE(result.has_value());
+    }
+
+    // 检查除了这 20 个 key 的其他 key 存在
+    for (int i = 20; i < totalKeys; ++i) {
+        std::string k = "key" + std::to_string(i);
+        auto result = tree.search(k);
+        EXPECT_TRUE(result.has_value());
+    }
+}
+
 
 int main(int argc, char **argv)
 {
