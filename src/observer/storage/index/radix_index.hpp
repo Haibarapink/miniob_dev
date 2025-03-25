@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <optional>
 
@@ -17,14 +18,18 @@ namespace radix {
 template <typename V>
 struct radix_node
 {
-  bool                                        leaf = false;
   string                                      subkey;
   std::shared_ptr<V>                          v;
   std::vector<std::shared_ptr<radix_node<V>>> children;
+  size_t                                      children_count = 0;
 
   inline bool has_child(char ch) const { return children[static_cast<uint8_t>(ch)] != nullptr; }
 
-  inline void add_child(char ch, std::shared_ptr<radix_node<V>> child) { children[static_cast<uint8_t>(ch)] = child; }
+  inline void add_child(char ch, std::shared_ptr<radix_node<V>> child)
+  {
+    children[static_cast<uint8_t>(ch)] = child;
+    children_count++;
+  }
 
   inline std::shared_ptr<radix_node<V>> &at(char ch) { return children[static_cast<uint8_t>(ch)]; }
 
@@ -60,14 +65,15 @@ public:
 
   static constexpr size_t children_count() { return 256; }
 
-  void put(const string &key, V val);
-
-  std::optional<V> search(string_view key);
-  bool             start_with(string_view key);
+  void               put(string_view key, V val);
+  std::shared_ptr<V> remove(string_view key);
+  std::optional<V>   search(string_view key);
 
 private:
   void recursive_put(
       std::shared_ptr<radix_node<V>> parent, std::shared_ptr<radix_node<V>> node, string_view key, V val);
+  std::pair<std::shared_ptr<V>, bool> recursive_remove(
+      std::shared_ptr<radix_node<V>> parent, std::shared_ptr<radix_node<V>> node, string_view key);
 
 private:
   /**
@@ -89,13 +95,54 @@ private:
 };
 
 template <typename V>
-void radix_tree<V>::put(const string &key, V val)
+void radix_tree<V>::put(string_view key, V val)
 {
   if (key.empty()) {
     return;
   }
 
   return recursive_put(root_, root_->children[key[0]], key, val);
+}
+
+template <typename V>
+std::shared_ptr<V> radix_tree<V>::remove(string_view key)
+{
+  if (key.empty()) {
+    return nullptr;
+  }
+  return recursive_remove(root_, root_->children[key[0]], key).first;
+}
+
+template <typename V>
+std::pair<std::shared_ptr<V>, bool> radix_tree<V>::recursive_remove(
+    std::shared_ptr<radix_node<V>> parent, std::shared_ptr<radix_node<V>> node, string_view key)
+{
+  if (node == nullptr || key.empty()) {
+    return {nullptr , false};
+  }
+
+  auto [matched_prefix_length, latest_matched_ch] = prefix_length(node->subkey, key);
+  if (matched_prefix_length == key.size()) {
+    if (node->v == nullptr) {
+      return {nullptr, false};
+    }
+    auto res   = node->v;
+    bool clean = false;
+    node->v    = nullptr;
+    if (node->children_count == 0) {
+      clean = true;
+    }
+    return {res, clean};
+  } else {
+    key                     = key.substr(matched_prefix_length);
+    auto [res, child_clean] = recursive_remove(node, node->children[key[0]], key);
+    if (child_clean) {
+      node->children_count -= 1;
+      child_clean = node->children_count == 0;
+      node->children[key[0]] = nullptr;
+    }
+    return {res, child_clean};
+  }
 }
 
 template <typename V>
@@ -126,28 +173,6 @@ std::optional<V> radix_tree<V>::search(string_view key)
     return node->v == nullptr ? std::nullopt : std::optional<V>{*node->v};
   }
   return std::nullopt;
-}
-
-template <typename V>
-bool radix_tree<V>::start_with(string_view key)
-{
-  auto node = root_;
-  while (key.size() && node) {
-    string_view prefix              = node->subkey;
-    auto [matched_prefix_length, _] = prefix_length(key, prefix);
-    if (matched_prefix_length == key.size()) {
-      return true;
-    } else {
-      char ch = key.at(matched_prefix_length);
-      key     = key.substr(matched_prefix_length);
-      node    = node->children[static_cast<uint8_t>(ch)];
-    }
-  }
-  if (key.empty()) {
-    return true;
-  }
-
-  return false;
 }
 
 template <typename V>

@@ -119,8 +119,15 @@ TEST(RadixTreeTest, InsertEmptyKey)
   auto result = tree.search("");
   EXPECT_FALSE(result.has_value());
 }
+// 测试 search 方法的边界情况
+TEST(RadixTreeTest, SearchBoundaryCase) {
+    radix_tree<int> tree;
+    tree.put("cherry", 1);
+    auto result = tree.search("cherr");
+    EXPECT_FALSE(result.has_value());
+}
 
-TEST(RadixTreeTest, StartWith)
+TEST(RadixTreeTest, RemoveCase)
 {
   radix_tree<int> tree;
   for (auto i = 0; i < 10000; ++i) {
@@ -128,18 +135,11 @@ TEST(RadixTreeTest, StartWith)
     tree.put(k, i);
   }
 
+  auto v=  *tree.remove("key1234");
+  EXPECT_EQ(v, 1234);
+  EXPECT_FALSE(tree.search("key1234").has_value());
 
-  EXPECT_TRUE(tree.start_with("ke"));
-  EXPECT_TRUE(tree.start_with("key1"));
-  EXPECT_FALSE(tree.start_with("hello"));
-}
-
-// 测试 search 方法的边界情况
-TEST(RadixTreeTest, SearchBoundaryCase) {
-    radix_tree<int> tree;
-    tree.put("cherry", 1);
-    auto result = tree.search("cherr");
-    EXPECT_FALSE(result.has_value());
+  
 }
 
 int main(int argc, char **argv)
